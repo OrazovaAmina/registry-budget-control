@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Реестр договоров - Реестр договоров</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Реестр договоров</h1>
+            <p class="subtitle">Управление договорами и контроль экономии</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="contracts.html" class="nav-item active">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">Реестр договоров</span>
+            </a>
+            <a href="analytics.html" class="nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">Аналитика</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Отчеты</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Настройки</span>
+            </a>
+        </nav>
+
+        <main>
+            <div class="search-filter">
+                <input type="text" id="searchInput" placeholder="Поиск по номеру, предмету, поставщику, БИН">
+                <select id="statusFilter">
+                    <option value="">Все статусы</option>
+                    <option value="active">Активный</option>
+                    <option value="completed">Завершен</option>
+                    <option value="cancelled">Отменен</option>
+                    <option value="pending">Ожидает</option>
+                </select>
+                <select id="departmentFilter">
+                    <option value="">Все подразделения</option>
+                </select>
+                <button onclick="applyFilters()" class="btn btn-primary">Применить</button>
+                <button onclick="resetFilters()" class="btn btn-secondary">Сбросить</button>
+                <button onclick="openModal('contractModal')" class="btn btn-success">Добавить договор</button>
+                <button onclick="exportToCSV()" class="btn btn-warning">Экспорт CSV</button>
+            </div>
+
+            <div class="table-container">
+                <table id="contractsTable">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>Дата</th>
+                            <th>Предмет</th>
+                            <th>Поставщик</th>
+                            <th>БИН</th>
+                            <th>Подразделение</th>
+                            <th>Плановая сумма</th>
+                            <th>Сумма договора</th>
+                            <th>Экономия</th>
+                            <th>Перерасход</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="12">Загрузка данных...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <footer>
+            <p>Версия 1.0 | Локальная информационная система</p>
+        </footer>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования договора -->
+    <div id="contractModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Добавить договор</h2>
+                <button class="modal-close" onclick="closeModal('contractModal')">&times;</button>
+            </div>
+            <form id="contractForm" onsubmit="saveContract(event)">
+                <input type="hidden" id="contractId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contractNumber">Номер договора *</label>
+                        <input type="text" id="contractNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contractDate">Дата *</label>
+                        <input type="date" id="contractDate" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Предмет договора *</label>
+                    <input type="text" id="subject" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="supplier">Поставщик *</label>
+                        <input type="text" id="supplier" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bin">БИН</label>
+                        <input type="text" id="bin">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Подразделение *</label>
+                        <select id="department" required>
+                            <option value="">Выберите подразделение</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsible">Ответственный *</label>
+                        <input type="text" id="responsible" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="plannedAmount">Плановая сумма (₸) *</label>
+                        <input type="number" id="plannedAmount" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contractAmount">Сумма договора (₸) *</label>
+                        <input type="number" id="contractAmount" step="0.01" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Статус *</label>
+                    <select id="status" required>
+                        <option value="active">Активный</option>
+                        <option value="completed">Завершен</option>
+                        <option value="cancelled">Отменен</option>
+                        <option value="pending">Ожидает</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="startDate">Дата начала</label>
+                        <input type="date" id="startDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="endDate">Дата окончания</label>
+                        <input type="date" id="endDate">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="comments">Комментарии</label>
+                    <textarea id="comments" rows="3"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" onclick="closeModal('contractModal')" class="btn btn-secondary">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/dataManager.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        let currentContracts = [];
+
+        async function loadContracts() {
+            try {
+                await dataManager.init();
+                currentContracts = dataManager.getAllContracts();
+                renderContracts(currentContracts);
+                loadDepartments();
+            } catch (error) {
+                console.error('Ошибка загрузки договоров:', error);
+                document.querySelector('#contractsTable tbody').innerHTML = '<tr><td colspan="12">Ошибка загрузки данных</td></tr>';
+            }
+        }
+
+        function renderContracts(contracts) {
+            const tbody = document.querySelector('#contractsTable tbody');
+            
+            if (contracts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12">Нет данных</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = contracts.map(contract => `
+                <tr>
+                    <td>${contract.contractNumber || '-'}</td>
+                    <td>${formatDate(contract.date)}</td>
+                    <td>${contract.subject || '-'}</td>
+                    <td>${contract.supplier || '-'}</td>
+                    <td>${contract.bin || '-'}</td>
+                    <td>${contract.department || '-'}</td>
+                    <td>${formatCurrency(contract.plannedAmount || 0)}</td>
+                    <td>${formatCurrency(contract.contractAmount || 0)}</td>
+                    <td style="color: ${contract.economy > 0 ? '#28a745' : '#333'}">${formatCurrency(contract.economy || 0)}</td>
+                    <td style="color: ${contract.overrun > 0 ? '#dc3545' : '#333'}">${formatCurrency(contract.overrun || 0)}</td>
+                    <td><span class="status-badge status-${contract.status?.toLowerCase() || 'pending'}">${getStatusText(contract.status)}</span></td>
+                    <td>
+                        <button onclick="editContract('${contract.id}')" class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.85rem;">Редактировать</button>
+                        <button onclick="deleteContract('${contract.id}')" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85rem;">Удалить</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'active': 'Активный',
+                'completed': 'Завершен',
+                'cancelled': 'Отменен',
+                'pending': 'Ожидает'
+            };
+            return statusMap[status] || status || 'Не указан';
+        }
+
+        function loadDepartments() {
+            const departments = dataManager.getAllDepartments();
+            const departmentSelect = document.getElementById('department');
+            const departmentFilter = document.getElementById('departmentFilter');
+            
+            const options = departments.map(dept => `<option value="${dept.name}">${dept.name}</option>`).join('');
+            departmentSelect.innerHTML = '<option value="">Выберите подразделение</option>' + options;
+            departmentFilter.innerHTML = '<option value="">Все подразделения</option>' + options;
+        }
+
+        function applyFilters() {
+            const filters = {
+                search: document.getElementById('searchInput').value,
+                status: document.getElementById('statusFilter').value,
+                department: document.getElementById('departmentFilter').value
+            };
+
+            const filtered = dataManager.filterContracts(filters);
+            currentContracts = filtered;
+            renderContracts(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('departmentFilter').value = '';
+            
+            currentContracts = dataManager.getAllContracts();
+            renderContracts(currentContracts);
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.getElementById('modalTitle').textContent = 'Добавить договор';
+            document.getElementById('contractForm').reset();
+            document.getElementById('contractId').value = '';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function saveContract(event) {
+            event.preventDefault();
+
+            const contractData = {
+                contractNumber: document.getElementById('contractNumber').value,
+                date: document.getElementById('contractDate').value,
+                subject: document.getElementById('subject').value,
+                supplier: document.getElementById('supplier').value,
+                bin: document.getElementById('bin').value,
+                department: document.getElementById('department').value,
+                responsible: document.getElementById('responsible').value,
+                plannedAmount: parseFloat(document.getElementById('plannedAmount').value),
+                contractAmount: parseFloat(document.getElementById('contractAmount').value),
+                status: document.getElementById('status').value,
+                startDate: document.getElementById('startDate').value,
+                endDate: document.getElementById('endDate').value,
+                comments: document.getElementById('comments').value
+            };
+
+            const contractId = document.getElementById('contractId').value;
+
+            if (contractId) {
+                dataManager.updateContract(contractId, contractData);
+                showNotification('Договор обновлен', 'success');
+            } else {
+                dataManager.addContract(contractData);
+                showNotification('Договор добавлен', 'success');
+            }
+
+            closeModal('contractModal');
+            loadContracts();
+        }
+
+        function editContract(id) {
+            const contract = dataManager.getContract(id);
+            if (!contract) return;
+
+            document.getElementById('modalTitle').textContent = 'Редактировать договор';
+            document.getElementById('contractId').value = contract.id;
+            document.getElementById('contractNumber').value = contract.contractNumber || '';
+            document.getElementById('contractDate').value = contract.date || '';
+            document.getElementById('subject').value = contract.subject || '';
+            document.getElementById('supplier').value = contract.supplier || '';
+            document.getElementById('bin').value = contract.bin || '';
+            document.getElementById('department').value = contract.department || '';
+            document.getElementById('responsible').value = contract.responsible || '';
+            document.getElementById('plannedAmount').value = contract.plannedAmount || '';
+            document.getElementById('contractAmount').value = contract.contractAmount || '';
+            document.getElementById('status').value = contract.status || 'active';
+            document.getElementById('startDate').value = contract.startDate || '';
+            document.getElementById('endDate').value = contract.endDate || '';
+            document.getElementById('comments').value = contract.comments || '';
+
+            openModal('contractModal');
+        }
+
+        function deleteContract(id) {
+            if (!confirmAction('Вы уверены, что хотите удалить этот договор?')) return;
+
+            if (dataManager.deleteContract(id)) {
+                showNotification('Договор удален', 'success');
+                loadContracts();
+            } else {
+                showNotification('Ошибка удаления', 'error');
+            }
+        }
+
+        function exportToCSV() {
+            if (currentContracts.length === 0) {
+                showNotification('Нет данных для экспорта', 'error');
+                return;
+            }
+
+            dataManager.exportToCSV(currentContracts, 'contracts.csv');
+            showNotification('CSV файл скачан', 'success');
+        }
+
+        // Загрузка при инициализации
+        loadContracts();
+    </script>
+</body>
+</html>
