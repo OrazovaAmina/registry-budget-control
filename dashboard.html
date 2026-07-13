@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Реестр договоров</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dashboard</h1>
+            <p class="subtitle">Обзор системы и ключевые показатели</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="dashboard.html" class="nav-item active">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="contracts.html" class="nav-item">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">Реестр договоров</span>
+            </a>
+            <a href="analytics.html" class="nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">Аналитика</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Отчеты</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Настройки</span>
+            </a>
+        </nav>
+
+        <main>
+            <div class="dashboard-grid" id="statsGrid">
+                <div class="stat-card">
+                    <h3>Всего договоров</h3>
+                    <div class="value" id="totalContracts">0</div>
+                    <div class="trend">Активных записей</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Плановая сумма</h3>
+                    <div class="value" id="totalPlanned">0 ₸</div>
+                    <div class="trend">Общий бюджет</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Сумма договоров</h3>
+                    <div class="value" id="totalContract">0 ₸</div>
+                    <div class="trend">Фактические расходы</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Экономия</h3>
+                    <div class="value" id="totalEconomy">0 ₸</div>
+                    <div class="trend positive" id="economyPercent">0%</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Перерасход</h3>
+                    <div class="value" id="totalOverrun">0 ₸</div>
+                    <div class="trend negative">Превышение бюджета</div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Статусы договоров</h3>
+                    <div class="chart-placeholder" id="statusChart">
+                        <span>Данные загружаются...</span>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>Последние договоры</h3>
+                    <div class="table-container">
+                        <table id="recentContractsTable">
+                            <thead>
+                                <tr>
+                                    <th>Номер</th>
+                                    <th>Предмет</th>
+                                    <th>Сумма</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="4">Загрузка данных...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Быстрые действия</h3>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <a href="contracts.html" class="btn btn-primary">Добавить договор</a>
+                    <a href="analytics.html" class="btn btn-secondary">Посмотреть аналитику</a>
+                    <a href="reports.html" class="btn btn-success">Сформировать отчет</a>
+                    <button onclick="createBackup()" class="btn btn-warning">Создать резервную копию</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Версия 1.0 | Локальная информационная система</p>
+        </footer>
+    </div>
+
+    <script src="js/dataManager.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        async function loadDashboard() {
+            try {
+                await dataManager.init();
+                const stats = dataManager.getStatistics();
+                
+                document.getElementById('totalContracts').textContent = stats.totalContracts;
+                document.getElementById('totalPlanned').textContent = formatCurrency(stats.totalPlanned);
+                document.getElementById('totalContract').textContent = formatCurrency(stats.totalContract);
+                document.getElementById('totalEconomy').textContent = formatCurrency(stats.totalEconomy);
+                document.getElementById('totalOverrun').textContent = formatCurrency(stats.totalOverrun);
+                document.getElementById('economyPercent').textContent = stats.economyPercent + '%';
+                
+                // Отображение статусов
+                const statusChart = document.getElementById('statusChart');
+                let statusHTML = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                for (const [status, count] of Object.entries(stats.statusCounts)) {
+                    const percentage = stats.totalContracts > 0 ? ((count / stats.totalContracts) * 100).toFixed(1) : 0;
+                    statusHTML += `
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="flex: 1;">${status}</span>
+                            <span style="font-weight: bold;">${count}</span>
+                            <span style="color: #666;">(${percentage}%)</span>
+                        </div>
+                    `;
+                }
+                statusHTML += '</div>';
+                statusChart.innerHTML = statusHTML || '<span>Нет данных</span>';
+                
+                // Последние договоры
+                const recentContracts = dataManager.getAllContracts().slice(-5).reverse();
+                const tbody = document.querySelector('#recentContractsTable tbody');
+                
+                if (recentContracts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4">Нет данных</td></tr>';
+                } else {
+                    tbody.innerHTML = recentContracts.map(contract => `
+                        <tr>
+                            <td>${contract.contractNumber || '-'}</td>
+                            <td>${contract.subject || '-'}</td>
+                            <td>${formatCurrency(contract.contractAmount || 0)}</td>
+                            <td><span class="status-badge status-${contract.status?.toLowerCase() || 'pending'}">${contract.status || 'Не указан'}</span></td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки dashboard:', error);
+            }
+        }
+
+        function createBackup() {
+            dataManager.createBackup();
+            showNotification('Резервная копия создана', 'success');
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
