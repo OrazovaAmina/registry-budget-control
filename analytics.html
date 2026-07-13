@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аналитика - Реестр договоров</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Аналитика</h1>
+            <p class="subtitle">Графики и анализ данных</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="contracts.html" class="nav-item">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">Реестр договоров</span>
+            </a>
+            <a href="analytics.html" class="nav-item active">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">Аналитика</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Отчеты</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Настройки</span>
+            </a>
+        </nav>
+
+        <main>
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Распределение по статусам</h3>
+                    <div class="chart-placeholder" id="statusChart">
+                        <span>Загрузка данных...</span>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>Распределение по подразделениям</h3>
+                    <div class="chart-placeholder" id="departmentChart">
+                        <span>Загрузка данных...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Экономия по месяцам</h3>
+                    <div class="chart-placeholder" id="economyChart">
+                        <span>Загрузка данных...</span>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h3>Топ поставщиков по сумме</h3>
+                    <div class="chart-placeholder" id="supplierChart">
+                        <span>Загрузка данных...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <h3>Общая статистика</h3>
+                <div class="dashboard-grid" id="analyticsStats">
+                    <div class="stat-card">
+                        <h3>Средняя экономия</h3>
+                        <div class="value" id="avgEconomy">0 ₸</div>
+                        <div class="trend">На договор</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Средний процент экономии</h3>
+                        <div class="value" id="avgEconomyPercent">0%</div>
+                        <div class="trend">От плановой суммы</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Договоры с экономией</h3>
+                        <div class="value" id="economyContracts">0</div>
+                        <div class="trend">Из общего числа</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Договоры с перерасходом</h3>
+                        <div class="value" id="overrunContracts">0</div>
+                        <div class="trend">Из общего числа</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Версия 1.0 | Локальная информационная система</p>
+        </footer>
+    </div>
+
+    <script src="js/dataManager.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        async function loadAnalytics() {
+            try {
+                await dataManager.init();
+                const contracts = dataManager.getAllContracts();
+                const stats = dataManager.getStatistics();
+
+                // Статусный график
+                renderStatusChart(stats.statusCounts, stats.totalContracts);
+
+                // График по подразделениям
+                renderDepartmentChart(contracts);
+
+                // График экономии по месяцам
+                renderEconomyChart(contracts);
+
+                // График поставщиков
+                renderSupplierChart(contracts);
+
+                // Общая статистика
+                renderAnalyticsStats(contracts);
+            } catch (error) {
+                console.error('Ошибка загрузки аналитики:', error);
+            }
+        }
+
+        function renderStatusChart(statusCounts, total) {
+            const container = document.getElementById('statusChart');
+            let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+            
+            const statusColors = {
+                'active': '#28a745',
+                'completed': '#007bff',
+                'cancelled': '#dc3545',
+                'pending': '#ffc107'
+            };
+
+            const statusNames = {
+                'active': 'Активный',
+                'completed': 'Завершен',
+                'cancelled': 'Отменен',
+                'pending': 'Ожидает'
+            };
+
+            for (const [status, count] of Object.entries(statusCounts)) {
+                const percentage = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                const color = statusColors[status] || '#6c757d';
+                const name = statusNames[status] || status;
+                
+                html += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>${name}</span>
+                            <span>${count} (${percentage}%)</span>
+                        </div>
+                        <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                            <div style="background: ${color}; height: 100%; width: ${percentage}%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            container.innerHTML = html || '<span>Нет данных</span>';
+        }
+
+        function renderDepartmentChart(contracts) {
+            const container = document.getElementById('departmentChart');
+            
+            const departmentData = contracts.reduce((acc, contract) => {
+                const dept = contract.department || 'Не указано';
+                const amount = parseFloat(contract.contractAmount) || 0;
+                acc[dept] = (acc[dept] || 0) + amount;
+                return acc;
+            }, {});
+
+            const total = Object.values(departmentData).reduce((sum, val) => sum + val, 0);
+            const sortedDepts = Object.entries(departmentData).sort((a, b) => b[1] - a[1]);
+
+            let html = '<div style="display: flex; flex-direction: column; gap: 15px; max-height: 300px; overflow-y: auto;">';
+            
+            sortedDepts.forEach(([dept, amount]) => {
+                const percentage = total > 0 ? ((amount / total) * 100).toFixed(1) : 0;
+                html += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>${dept}</span>
+                            <span>${formatCurrency(amount)} (${percentage}%)</span>
+                        </div>
+                        <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                            <div style="background: #667eea; height: 100%; width: ${percentage}%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html || '<span>Нет данных</span>';
+        }
+
+        function renderEconomyChart(contracts) {
+            const container = document.getElementById('economyChart');
+            
+            const monthlyData = contracts.reduce((acc, contract) => {
+                if (!contract.date) return acc;
+                const date = new Date(contract.date);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const economy = parseFloat(contract.economy) || 0;
+                acc[monthKey] = (acc[monthKey] || 0) + economy;
+                return acc;
+            }, {});
+
+            const sortedMonths = Object.entries(monthlyData).sort((a, b) => a[0].localeCompare(b[0]));
+            const maxEconomy = Math.max(...Object.values(monthlyData), 1);
+
+            let html = '<div style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">';
+            
+            sortedMonths.forEach(([month, economy]) => {
+                const percentage = (economy / maxEconomy) * 100;
+                html += `
+                    <div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>${month}</span>
+                            <span>${formatCurrency(economy)}</span>
+                        </div>
+                        <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                            <div style="background: #28a745; height: 100%; width: ${percentage}%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html || '<span>Нет данных</span>';
+        }
+
+        function renderSupplierChart(contracts) {
+            const container = document.getElementById('supplierChart');
+            
+            const supplierData = contracts.reduce((acc, contract) => {
+                const supplier = contract.supplier || 'Не указано';
+                const amount = parseFloat(contract.contractAmount) || 0;
+                acc[supplier] = (acc[supplier] || 0) + amount;
+                return acc;
+            }, {});
+
+            const total = Object.values(supplierData).reduce((sum, val) => sum + val, 0);
+            const sortedSuppliers = Object.entries(supplierData).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+            let html = '<div style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto;">';
+            
+            sortedSuppliers.forEach(([supplier, amount]) => {
+                const percentage = total > 0 ? ((amount / total) * 100).toFixed(1) : 0;
+                html += `
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                        <span style="flex: 1;">${supplier}</span>
+                        <span style="font-weight: bold; margin-left: 10px;">${formatCurrency(amount)}</span>
+                        <span style="color: #666; margin-left: 10px;">(${percentage}%)</span>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            container.innerHTML = html || '<span>Нет данных</span>';
+        }
+
+        function renderAnalyticsStats(contracts) {
+            const economyContracts = contracts.filter(c => c.economy > 0);
+            const overrunContracts = contracts.filter(c => c.overrun > 0);
+            
+            const avgEconomy = economyContracts.length > 0 
+                ? economyContracts.reduce((sum, c) => sum + (parseFloat(c.economy) || 0), 0) / economyContracts.length 
+                : 0;
+            
+            const avgEconomyPercent = economyContracts.length > 0
+                ? economyContracts.reduce((sum, c) => sum + (parseFloat(c.economyPercent) || 0), 0) / economyContracts.length
+                : 0;
+
+            document.getElementById('avgEconomy').textContent = formatCurrency(avgEconomy);
+            document.getElementById('avgEconomyPercent').textContent = avgEconomyPercent.toFixed(2) + '%';
+            document.getElementById('economyContracts').textContent = economyContracts.length;
+            document.getElementById('overrunContracts').textContent = overrunContracts.length;
+        }
+
+        loadAnalytics();
+    </script>
+</body>
+</html>
