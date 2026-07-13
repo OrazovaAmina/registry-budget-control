@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - Реестр договоров</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Настройки</h1>
+            <p class="subtitle">Управление системой и данными</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="contracts.html" class="nav-item">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">Реестр договоров</span>
+            </a>
+            <a href="analytics.html" class="nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">Аналитика</span>
+            </a>
+            <a href="reports.html" class="nav-item">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Отчеты</span>
+            </a>
+            <a href="settings.html" class="nav-item active">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Настройки</span>
+            </a>
+        </nav>
+
+        <main>
+            <div class="settings-section">
+                <h2>📁 Управление данными</h2>
+                <div class="settings-item">
+                    <div>
+                        <strong>Создать резервную копию</strong>
+                        <p style="color: #666; font-size: 0.9rem;">Сохранить все данные в JSON файл</p>
+                    </div>
+                    <button onclick="createBackup()" class="btn btn-primary">Создать</button>
+                </div>
+                <div class="settings-item">
+                    <div>
+                        <strong>Восстановить из резервной копии</strong>
+                        <p style="color: #666; font-size: 0.9rem;">Загрузить данные из JSON файла</p>
+                    </div>
+                    <input type="file" id="restoreFile" accept=".json" onchange="restoreFromBackup(event)" style="display: none;">
+                    <button onclick="document.getElementById('restoreFile').click()" class="btn btn-secondary">Загрузить</button>
+                </div>
+                <div class="settings-item">
+                    <div>
+                        <strong>Экспорт всех данных</strong>
+                        <p style="color: #666; font-size: 0.9rem;">Экспортировать все данные в CSV</p>
+                    </div>
+                    <button onclick="exportAllData()" class="btn btn-success">Экспорт</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2>🏢 Справочники</h2>
+                <div class="settings-item">
+                    <div>
+                        <strong>Подразделения</strong>
+                        <p style="color: #666; font-size: 0.9rem;">Управление списком подразделений</p>
+                    </div>
+                    <button onclick="openModal('departmentModal')" class="btn btn-primary">Управлять</button>
+                </div>
+                <div class="settings-item">
+                    <div>
+                        <strong>Поставщики</strong>
+                        <p style="color: #666; font-size: 0.9rem;">Управление списком поставщиков</p>
+                    </div>
+                    <button onclick="openModal('supplierModal')" class="btn btn-primary">Управлять</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2>📊 Журнал действий</h2>
+                <div class="table-container">
+                    <table id="logsTable">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Действие</th>
+                                <th>Тип сущности</th>
+                                <th>ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="4">Загрузка данных...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h2>⚠️ Опасные действия</h2>
+                <div class="settings-item">
+                    <div>
+                        <strong>Очистить все данные</strong>
+                        <p style="color: #dc3545; font-size: 0.9rem;">Удалить все договоры и справочники</p>
+                    </div>
+                    <button onclick="clearAllData()" class="btn btn-danger">Очистить</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Версия 1.0 | Локальная информационная система</p>
+        </footer>
+    </div>
+
+    <!-- Модальное окно для управления подразделениями -->
+    <div id="departmentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Управление подразделениями</h2>
+                <button class="modal-close" onclick="closeModal('departmentModal')">&times;</button>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="newDepartmentName" placeholder="Название подразделения" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <button onclick="addDepartment()" class="btn btn-success">Добавить</button>
+                </div>
+                <div id="departmentsList" style="max-height: 300px; overflow-y: auto;">
+                    <p>Загрузка...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для управления поставщиками -->
+    <div id="supplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Управление поставщиками</h2>
+                <button class="modal-close" onclick="closeModal('supplierModal')">&times;</button>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="text" id="newSupplierName" placeholder="Название поставщика" style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <input type="text" id="newSupplierBin" placeholder="БИН" style="width: 150px; padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                    <button onclick="addSupplier()" class="btn btn-success">Добавить</button>
+                </div>
+                <div id="suppliersList" style="max-height: 300px; overflow-y: auto;">
+                    <p>Загрузка...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dataManager.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        async function loadSettings() {
+            try {
+                await dataManager.init();
+                loadLogs();
+            } catch (error) {
+                console.error('Ошибка загрузки настроек:', error);
+            }
+        }
+
+        function loadLogs() {
+            const logs = dataManager.getLogs().slice(-20).reverse();
+            const tbody = document.querySelector('#logsTable tbody');
+            
+            if (logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4">Нет записей</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = logs.map(log => `
+                <tr>
+                    <td>${formatDate(log.timestamp)}</td>
+                    <td>${getActionText(log.action)}</td>
+                    <td>${log.entityType}</td>
+                    <td>${log.entityId}</td>
+                </tr>
+            `).join('');
+        }
+
+        function getActionText(action) {
+            const actionMap = {
+                'CREATE': 'Создание',
+                'UPDATE': 'Обновление',
+                'DELETE': 'Удаление',
+                'BACKUP': 'Резервная копия',
+                'RESTORE': 'Восстановление'
+            };
+            return actionMap[action] || action;
+        }
+
+        function createBackup() {
+            dataManager.createBackup();
+            showNotification('Резервная копия создана', 'success');
+            loadLogs();
+        }
+
+        function restoreFromBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    dataManager.restoreFromBackup(backupData);
+                    showNotification('Данные восстановлены', 'success');
+                    loadLogs();
+                } catch (error) {
+                    showNotification('Ошибка восстановления', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportAllData() {
+            const contracts = dataManager.getAllContracts();
+            dataManager.exportToCSV(contracts, 'all_contracts.csv');
+            showNotification('Данные экспортированы', 'success');
+        }
+
+        function clearAllData() {
+            if (!confirmAction('Вы уверены, что хотите удалить все данные? Это действие нельзя отменить!')) return;
+
+            dataManager.contracts = [];
+            dataManager.suppliers = [];
+            dataManager.departments = [];
+            dataManager.logs = [];
+            
+            showNotification('Все данные удалены', 'success');
+            loadLogs();
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            
+            if (modalId === 'departmentModal') {
+                loadDepartments();
+            } else if (modalId === 'supplierModal') {
+                loadSuppliers();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function loadDepartments() {
+            const departments = dataManager.getAllDepartments();
+            const container = document.getElementById('departmentsList');
+            
+            if (departments.length === 0) {
+                container.innerHTML = '<p>Нет подразделений</p>';
+                return;
+            }
+
+            container.innerHTML = departments.map(dept => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 5px;">
+                    <span>${dept.name}</span>
+                    <button onclick="deleteDepartment('${dept.id}')" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85rem;">Удалить</button>
+                </div>
+            `).join('');
+        }
+
+        function addDepartment() {
+            const name = document.getElementById('newDepartmentName').value.trim();
+            if (!name) {
+                showNotification('Введите название', 'error');
+                return;
+            }
+
+            dataManager.addDepartment({ name });
+            document.getElementById('newDepartmentName').value = '';
+            showNotification('Подразделение добавлено', 'success');
+            loadDepartments();
+            loadLogs();
+        }
+
+        function deleteDepartment(id) {
+            if (!confirmAction('Удалить подразделение?')) return;
+            
+            dataManager.deleteDepartment(id);
+            showNotification('Подразделение удалено', 'success');
+            loadDepartments();
+            loadLogs();
+        }
+
+        function loadSuppliers() {
+            const suppliers = dataManager.getAllSuppliers();
+            const container = document.getElementById('suppliersList');
+            
+            if (suppliers.length === 0) {
+                container.innerHTML = '<p>Нет поставщиков</p>';
+                return;
+            }
+
+            container.innerHTML = suppliers.map(supplier => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 8px; margin-bottom: 5px;">
+                    <div>
+                        <strong>${supplier.name}</strong>
+                        ${supplier.bin ? `<span style="color: #666; margin-left: 10px;">БИН: ${supplier.bin}</span>` : ''}
+                    </div>
+                    <button onclick="deleteSupplier('${supplier.id}')" class="btn btn-danger" style="padding: 5px 10px; font-size: 0.85rem;">Удалить</button>
+                </div>
+            `).join('');
+        }
+
+        function addSupplier() {
+            const name = document.getElementById('newSupplierName').value.trim();
+            const bin = document.getElementById('newSupplierBin').value.trim();
+            
+            if (!name) {
+                showNotification('Введите название', 'error');
+                return;
+            }
+
+            dataManager.addSupplier({ name, bin });
+            document.getElementById('newSupplierName').value = '';
+            document.getElementById('newSupplierBin').value = '';
+            showNotification('Поставщик добавлен', 'success');
+            loadSuppliers();
+            loadLogs();
+        }
+
+        function deleteSupplier(id) {
+            if (!confirmAction('Удалить поставщика?')) return;
+            
+            dataManager.deleteSupplier(id);
+            showNotification('Поставщик удален', 'success');
+            loadSuppliers();
+            loadLogs();
+        }
+
+        loadSettings();
+    </script>
+</body>
+</html>
