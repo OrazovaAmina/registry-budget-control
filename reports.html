@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отчеты - Реестр договоров</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Отчеты</h1>
+            <p class="subtitle">Формирование и экспорт отчетов</p>
+        </header>
+
+        <nav class="main-nav">
+            <a href="dashboard.html" class="nav-item">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+            <a href="contracts.html" class="nav-item">
+                <span class="nav-icon">📄</span>
+                <span class="nav-text">Реестр договоров</span>
+            </a>
+            <a href="analytics.html" class="nav-item">
+                <span class="nav-icon">📈</span>
+                <span class="nav-text">Аналитика</span>
+            </a>
+            <a href="reports.html" class="nav-item active">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Отчеты</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">Настройки</span>
+            </a>
+        </nav>
+
+        <main>
+            <div class="chart-card">
+                <h3>Доступные отчеты</h3>
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="report-item" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>📊 Общий отчет по договорам</h4>
+                        <p style="color: #666; margin: 10px 0;">Полный список всех договоров с расчетом экономии и перерасхода</p>
+                        <button onclick="generateGeneralReport()" class="btn btn-primary">Сформировать</button>
+                    </div>
+
+                    <div class="report-item" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>💰 Отчет по экономии</h4>
+                        <p style="color: #666; margin: 10px 0;">Договоры с экономией и детальный анализ</p>
+                        <button onclick="generateEconomyReport()" class="btn btn-success">Сформировать</button>
+                    </div>
+
+                    <div class="report-item" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>⚠️ Отчет по перерасходу</h4>
+                        <p style="color: #666; margin: 10px 0;">Договоры с превышением бюджета</p>
+                        <button onclick="generateOverrunReport()" class="btn btn-danger">Сформировать</button>
+                    </div>
+
+                    <div class="report-item" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>🏢 Отчет по подразделениям</h4>
+                        <p style="color: #666; margin: 10px 0;">Сводка по подразделениям с анализом расходов</p>
+                        <button onclick="generateDepartmentReport()" class="btn btn-secondary">Сформировать</button>
+                    </div>
+
+                    <div class="report-item" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>📈 Отчет по поставщикам</h4>
+                        <p style="color: #666; margin: 10px 0;">Анализ поставщиков и объемов закупок</p>
+                        <button onclick="generateSupplierReport()" class="btn btn-warning">Сформировать</button>
+                    </div>
+
+                    <div class="report-item" style="padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                        <h4>📅 Отчет за период</h4>
+                        <p style="color: #666; margin: 10px 0;">Отчет за выбранный период времени</p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                            <input type="date" id="reportDateFrom" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <input type="date" id="reportDateTo" style="padding: 10px; border: 1px solid #ddd; border-radius: 8px;">
+                            <button onclick="generatePeriodReport()" class="btn btn-primary">Сформировать</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card" id="reportResult" style="display: none; margin-top: 20px;">
+                <h3>Результат отчета</h3>
+                <div class="table-container">
+                    <table id="reportTable">
+                        <thead id="reportTableHead"></thead>
+                        <tbody id="reportTableBody"></tbody>
+                    </table>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button onclick="exportReportToCSV()" class="btn btn-success">Экспорт в CSV</button>
+                    <button onclick="printReport()" class="btn btn-secondary">Печать</button>
+                    <button onclick="closeReport()" class="btn btn-danger">Закрыть</button>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Версия 1.0 | Локальная информационная система</p>
+        </footer>
+    </div>
+
+    <script src="js/dataManager.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        let currentReportData = [];
+        let currentReportName = '';
+
+        async function generateGeneralReport() {
+            await dataManager.init();
+            const contracts = dataManager.getAllContracts();
+            
+            currentReportData = contracts;
+            currentReportName = 'general_report';
+            
+            const headers = ['Номер', 'Дата', 'Предмет', 'Поставщик', 'БИН', 'Подразделение', 'Плановая сумма', 'Сумма договора', 'Экономия', 'Перерасход', 'Статус'];
+            renderReport(headers, contracts.map(c => [
+                c.contractNumber || '-',
+                formatDate(c.date),
+                c.subject || '-',
+                c.supplier || '-',
+                c.bin || '-',
+                c.department || '-',
+                formatCurrency(c.plannedAmount || 0),
+                formatCurrency(c.contractAmount || 0),
+                formatCurrency(c.economy || 0),
+                formatCurrency(c.overrun || 0),
+                getStatusText(c.status)
+            ]));
+        }
+
+        async function generateEconomyReport() {
+            await dataManager.init();
+            const contracts = dataManager.getAllContracts().filter(c => c.economy > 0);
+            
+            currentReportData = contracts;
+            currentReportName = 'economy_report';
+            
+            const headers = ['Номер', 'Предмет', 'Поставщик', 'Плановая сумма', 'Сумма договора', 'Экономия', '% экономии'];
+            renderReport(headers, contracts.map(c => [
+                c.contractNumber || '-',
+                c.subject || '-',
+                c.supplier || '-',
+                formatCurrency(c.plannedAmount || 0),
+                formatCurrency(c.contractAmount || 0),
+                formatCurrency(c.economy || 0),
+                c.economyPercent + '%'
+            ]));
+        }
+
+        async function generateOverrunReport() {
+            await dataManager.init();
+            const contracts = dataManager.getAllContracts().filter(c => c.overrun > 0);
+            
+            currentReportData = contracts;
+            currentReportName = 'overrun_report';
+            
+            const headers = ['Номер', 'Предмет', 'Поставщик', 'Плановая сумма', 'Сумма договора', 'Перерасход', '% перерасхода'];
+            renderReport(headers, contracts.map(c => [
+                c.contractNumber || '-',
+                c.subject || '-',
+                c.supplier || '-',
+                formatCurrency(c.plannedAmount || 0),
+                formatCurrency(c.contractAmount || 0),
+                formatCurrency(c.overrun || 0),
+                ((c.overrun / c.plannedAmount) * 100).toFixed(2) + '%'
+            ]));
+        }
+
+        async function generateDepartmentReport() {
+            await dataManager.init();
+            const contracts = dataManager.getAllContracts();
+            
+            const deptData = contracts.reduce((acc, c) => {
+                const dept = c.department || 'Не указано';
+                if (!acc[dept]) {
+                    acc[dept] = {
+                        count: 0,
+                        planned: 0,
+                        contract: 0,
+                        economy: 0,
+                        overrun: 0
+                    };
+                }
+                acc[dept].count++;
+                acc[dept].planned += parseFloat(c.plannedAmount) || 0;
+                acc[dept].contract += parseFloat(c.contractAmount) || 0;
+                acc[dept].economy += parseFloat(c.economy) || 0;
+                acc[dept].overrun += parseFloat(c.overrun) || 0;
+                return acc;
+            }, {});
+
+            currentReportData = Object.entries(deptData).map(([dept, data]) => ({
+                department: dept,
+                ...data
+            }));
+            currentReportName = 'department_report';
+            
+            const headers = ['Подразделение', 'Кол-во договоров', 'Плановая сумма', 'Сумма договоров', 'Экономия', 'Перерасход'];
+            renderReport(headers, currentReportData.map(d => [
+                d.department,
+                d.count,
+                formatCurrency(d.planned),
+                formatCurrency(d.contract),
+                formatCurrency(d.economy),
+                formatCurrency(d.overrun)
+            ]));
+        }
+
+        async function generateSupplierReport() {
+            await dataManager.init();
+            const contracts = dataManager.getAllContracts();
+            
+            const supplierData = contracts.reduce((acc, c) => {
+                const supplier = c.supplier || 'Не указано';
+                const bin = c.bin || '-';
+                if (!acc[supplier]) {
+                    acc[supplier] = {
+                        bin: bin,
+                        count: 0,
+                        total: 0,
+                        economy: 0
+                    };
+                }
+                acc[supplier].count++;
+                acc[supplier].total += parseFloat(c.contractAmount) || 0;
+                acc[supplier].economy += parseFloat(c.economy) || 0;
+                return acc;
+            }, {});
+
+            currentReportData = Object.entries(supplierData).map(([supplier, data]) => ({
+                supplier,
+                ...data
+            }));
+            currentReportName = 'supplier_report';
+            
+            const headers = ['Поставщик', 'БИН', 'Кол-во договоров', 'Общая сумма', 'Экономия'];
+            renderReport(headers, currentReportData.map(s => [
+                s.supplier,
+                s.bin,
+                s.count,
+                formatCurrency(s.total),
+                formatCurrency(s.economy)
+            ]));
+        }
+
+        async function generatePeriodReport() {
+            const dateFrom = document.getElementById('reportDateFrom').value;
+            const dateTo = document.getElementById('reportDateTo').value;
+
+            if (!dateFrom || !dateTo) {
+                showNotification('Выберите период', 'error');
+                return;
+            }
+
+            await dataManager.init();
+            const contracts = dataManager.getAllContracts().filter(c => {
+                if (!c.date) return false;
+                const contractDate = new Date(c.date);
+                return contractDate >= new Date(dateFrom) && contractDate <= new Date(dateTo);
+            });
+            
+            currentReportData = contracts;
+            currentReportName = `period_report_${dateFrom}_${dateTo}`;
+            
+            const headers = ['Номер', 'Дата', 'Предмет', 'Поставщик', 'Сумма договора', 'Экономия', 'Статус'];
+            renderReport(headers, contracts.map(c => [
+                c.contractNumber || '-',
+                formatDate(c.date),
+                c.subject || '-',
+                c.supplier || '-',
+                formatCurrency(c.contractAmount || 0),
+                formatCurrency(c.economy || 0),
+                getStatusText(c.status)
+            ]));
+        }
+
+        function renderReport(headers, rows) {
+            const thead = document.getElementById('reportTableHead');
+            const tbody = document.getElementById('reportTableBody');
+            
+            thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+            
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="' + headers.length + '">Нет данных</td></tr>';
+            } else {
+                tbody.innerHTML = rows.map(row => 
+                    '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>'
+                ).join('');
+            }
+            
+            document.getElementById('reportResult').style.display = 'block';
+        }
+
+        function exportReportToCSV() {
+            if (currentReportData.length === 0) {
+                showNotification('Нет данных для экспорта', 'error');
+                return;
+            }
+
+            dataManager.exportToCSV(currentReportData, `${currentReportName}.csv`);
+            showNotification('CSV файл скачан', 'success');
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        function closeReport() {
+            document.getElementById('reportResult').style.display = 'none';
+            currentReportData = [];
+            currentReportName = '';
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'active': 'Активный',
+                'completed': 'Завершен',
+                'cancelled': 'Отменен',
+                'pending': 'Ожидает'
+            };
+            return statusMap[status] || status || 'Не указан';
+        }
+    </script>
+</body>
+</html>
